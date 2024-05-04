@@ -8,10 +8,10 @@ LDIR =../lib
 
 LIBS=-lm
 
-_DEPS = 
+_DEPS = handler.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = server.o
+_OBJ = server.o handler.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 all: server
