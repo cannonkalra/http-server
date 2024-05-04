@@ -2,7 +2,7 @@
 #include "handler.h"
 
 #define PORT 8080
-#define BACKLOG 10
+#define MULTI_THREAD 0
 
 // Function to handle communication with the client
 
@@ -53,8 +53,10 @@ int main()
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
 
-    int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
-    if (client_fd < 0)
+    int *client_fd = (int *)malloc(sizeof(int));
+    *client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+
+    if (*client_fd < 0)
     {
       perror("webserver (accept)");
       // Continue to the next loop iteration if accept fails
@@ -62,8 +64,16 @@ int main()
     }
     printf("connection accepted\n");
 
+    if (!MULTI_THREAD)
+    {
+      handle_client(*client_fd);
+    }
+    else
+    {
+      pthread_t client_thread;
+      pthread_create(&client_thread, NULL, handle_client_multi_thread, client_fd);
+    }
     // Handle the client in the same thread (sequentially)
-    handle_client(client_fd);
   }
 
   // Close the server socket before exiting
