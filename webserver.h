@@ -6,6 +6,6 @@ struct foo
   int member;
 };
 
-int webserver(int);
+int webserver(int, int);
 
 #endif /* WEBSERVER_H */
