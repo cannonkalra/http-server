@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "request.h"
 
 int webserver(int port, int buffer_size)
 {
@@ -21,7 +22,7 @@ int webserver(int port, int buffer_size)
   if (sockfd == -1)
   {
     perror("webserver (socket)");
-    return 1;
+    return EXIT_FAILURE;
   }
   printf("socket created successfully\n");
 
@@ -41,7 +42,7 @@ int webserver(int port, int buffer_size)
   if (bind(sockfd, (struct sockaddr *)&host_addr, host_addrlen) != 0)
   {
     perror("webserver (bind)");
-    return 1;
+    return EXIT_FAILURE;
   }
   printf("socket successfully bound to address\n");
 
@@ -49,7 +50,7 @@ int webserver(int port, int buffer_size)
   if (listen(sockfd, SOMAXCONN) != 0)
   {
     perror("webserver (listen)");
-    return 1;
+    return EXIT_FAILURE;
   }
   printf("server listening for connections\n");
 
@@ -73,6 +74,8 @@ int webserver(int port, int buffer_size)
       perror("webserver (getsockname)");
       continue;
     }
+
+    request_handle(newsockfd);
 
     // Read from the socket
     int valread = read(newsockfd, buffer, buffer_size);

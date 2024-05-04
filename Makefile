@@ -8,10 +8,10 @@ LDIR =../lib
 
 LIBS=-lm
 
-_DEPS = http_server.h webserver.h
+_DEPS = http_server.h webserver.h request.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = http_server.o webserver.o
+_OBJ = http_server.o webserver.o request.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 all: http_server
