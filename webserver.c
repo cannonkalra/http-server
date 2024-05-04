@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -53,7 +54,7 @@ int webserver(int port, int buffer_size)
     perror("webserver (listen)");
     return EXIT_FAILURE;
   }
-  printf("server listening for connections\n");
+  printf("server listening for connections on sockfd: %d \n\n", sockfd);
 
   while (true)
   {
@@ -76,8 +77,17 @@ int webserver(int port, int buffer_size)
       continue;
     }
 
-    request_handle(newsockfd);
+    printf("handling request with sockfd: %d \n", newsockfd);
 
+    pthread_t thread;
+    // pthread_create(thread, NULL, request_handle, (void *)newsockfd);
+    // request_handle(newsockfd);
+
+    if (pthread_create(&thread, NULL, request_handle, (void *)newsockfd) != 0)
+    {
+      perror("pthread_create");
+      return EXIT_FAILURE;
+    }
     // // Read from the socket
     // int valread = read(newsockfd, buffer, buffer_size);
     // if (valread < 0)
@@ -99,6 +109,7 @@ int webserver(int port, int buffer_size)
     //   perror("webserver (write)");
     //   continue;
     // }
+    // printf("closing connection with sockfd: %d \n\n", newsockfd);
     // close(newsockfd);
   }
   return EXIT_SUCCESS;

@@ -106,8 +106,9 @@ void request_error(int fd, char *cause, char *errnum, char *shortmsg, char *long
   write(fd, body, strlen(body));
 }
 
-void request_handle(int fd)
+void *request_handle(void *newsockfd)
 {
+  int fd = (int)newsockfd;
   struct stat sbuf;
   char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF];
   char filename[MAXBUF], cgiargs[MAXBUF];
@@ -119,7 +120,7 @@ void request_handle(int fd)
   if (strcasecmp(method, "GET"))
   {
     request_error(fd, method, "501", "Not Implemented", "server does not implement this method");
-    return;
+    return NULL;
   }
 
   printf("main thread id: %d\n", pthread_self());
@@ -133,13 +134,26 @@ void request_handle(int fd)
   if (stat(filename, &sbuf) < 0)
   {
     request_error(fd, filename, "404", "Not found", "server could not find this file");
-    return;
+    return NULL;
   }
 
   if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
   {
     request_error(fd, filename, "403", "Forbidden", "server could not read this file");
-    return;
+    return NULL;
   }
   request_serve_static(fd, filename, sbuf.st_size);
+  printf("closing connection with sockfd: %d \n\n", fd);
+  // Read any remaining data from the peer
+  char buffer[256];
+  while (read(fd, buffer, sizeof(buffer)) > 0)
+  {
+    // Continue reading garbage until EOF
+  }
+
+  // Now we can safely close the socket
+  if (close(fd) < 0)
+  {
+    perror("Error closing socket");
+  }
 }
