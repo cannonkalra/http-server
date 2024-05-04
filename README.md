@@ -16,4 +16,4 @@ make clean && make all
 
 This creates a blocking call at the server by simulating a I/O wait. If you run `client.py` it will fire multiple requests to the server and will wait for the server to respond
 
-In addition, now it creates a thread on every connection passes it `newsockfd`, where it's closed after processing
+In addition, now it creates a thread on every connection passes it `client_fd`, where it's closed after processing

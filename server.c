@@ -1,13 +1,13 @@
-#include <pthread.h>
 #include "handler.h"
 
 #define PORT 8080
-#define MULTI_THREAD 0
+#define MULTI_THREAD 1
 
 // Function to handle communication with the client
 
 int main()
 {
+  printf("pid: %d, ppid: %d \n", getpid(), getppid());
   // Create a socket
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -44,7 +44,7 @@ int main()
     exit(EXIT_FAILURE);
   }
   printf("server listening for connections\n");
-  printf("main thread id: %d\n", (int)(intptr_t)pthread_self());
+  printf("main thread id: %d\n\n", (int)(intptr_t)pthread_self());
 
   // Loop to accept and handle incoming connections sequentially
   while (true)
@@ -71,7 +71,7 @@ int main()
     else
     {
       pthread_t client_thread;
-      pthread_create(&client_thread, NULL, handle_client_multi_thread, client_fd);
+      pthread_create(&client_thread, NULL, multi_thread_handler, client_fd);
     }
     // Handle the client in the same thread (sequentially)
   }
