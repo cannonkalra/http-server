@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include "handler.h"
 
 #define PORT 8080
@@ -43,10 +44,12 @@ int main()
     exit(EXIT_FAILURE);
   }
   printf("server listening for connections\n");
+  printf("main thread id: %d\n", (int)(intptr_t)pthread_self());
 
   // Loop to accept and handle incoming connections sequentially
   while (true)
   {
+
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
 
