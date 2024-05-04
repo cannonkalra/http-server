@@ -12,7 +12,7 @@
 
 #define MAXBUF (8192)
 
-#define SLEEP_MS 2200
+#define SLEEP_MS 1250
 
 int request_parse_uri(char *uri, char *filename, char *cgiargs)
 {
