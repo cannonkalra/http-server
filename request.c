@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "request.h"
+#include "io_helper.h"
 
 #define MAXBUF (8192)
 
@@ -27,9 +28,7 @@ int request_parse_uri(char *uri, char *filename, char *cgiargs)
   }
 }
 
-//
-// Fills in the filetype given the filename
-//
+// fills in the filetype given the filename
 void request_get_filetype(char *filename, char *filetype)
 {
   if (strstr(filename, ".html"))
@@ -50,7 +49,7 @@ void request_serve_static(int fd, char *filename, int filesize)
   request_get_filetype(filename, filetype);
   srcfd = open(filename, O_RDONLY, 0);
 
-  // Rather than call read() to read the file into memory,
+  // rather than call read() to read the file into memory,
   // which would require that we allocate a buffer, we memory-map the file
   srcp = mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
   close(srcfd);
@@ -70,6 +69,37 @@ void request_serve_static(int fd, char *filename, int filesize)
   munmap(srcp, filesize);
 }
 
+void request_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
+{
+  char buf[MAXBUF], body[MAXBUF];
+
+  // Create the body of error message first (have to know its length for header)
+  sprintf(body, ""
+                "<!doctype html>\r\n"
+                "<head>\r\n"
+                "  <title>OSTEP WebServer Error</title>\r\n"
+                "</head>\r\n"
+                "<body>\r\n"
+                "  <h2>%s: %s</h2>\r\n"
+                "  <p>%s: %s</p>\r\n"
+                "</body>\r\n"
+                "</html>\r\n",
+          errnum, shortmsg, longmsg, cause);
+
+  // Write out the header information for this response
+  sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
+  write(fd, buf, strlen(buf));
+
+  sprintf(buf, "Content-Type: text/html\r\n");
+  write(fd, buf, strlen(buf));
+
+  sprintf(buf, "Content-Length: %lu\r\n\r\n", strlen(body));
+  write(fd, buf, strlen(buf));
+
+  // Write out the body last
+  write(fd, body, strlen(body));
+}
+
 void request_handle(int fd)
 {
   int is_static;
@@ -81,37 +111,29 @@ void request_handle(int fd)
   sscanf(buf, "%s %s %s", method, uri, version);
   printf("method:%s uri:%s version:%s\n", method, uri, version);
 
-  // if (strcasecmp(method, "GET"))
-  // {
-  //   request_error(fd, method, "501", "Not Implemented", "server does not implement this method");
-  //   return;
-  // }
+  if (strcasecmp(method, "GET"))
+  {
+    request_error(fd, method, "501", "Not Implemented", "server does not implement this method");
+    return;
+  }
 
   // request_read_headers(fd);
+  // sprintf(filename, ".%s", uri);
+  if (strcmp(filename, "/") == 0 || strlen(filename) == 0)
+  {
+    strcat(filename, "index.html");
+  }
 
-  // is_static = request_parse_uri(uri, filename, cgiargs);
-  // if (stat(filename, &sbuf) < 0)
-  // {
-  //   request_error(fd, filename, "404", "Not found", "server could not find this file");
-  //   return;
-  // }
+  if (stat(filename, &sbuf) < 0)
+  {
+    request_error(fd, filename, "404", "Not found", "server could not find this file");
+    return;
+  }
 
-  // if (is_static)
-  // {
-  // if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
-  // {
-  // request_error(fd, filename, "403", "Forbidden", "server could not read this file");
-  // return;
-  // }
+  if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
+  {
+    request_error(fd, filename, "403", "Forbidden", "server could not read this file");
+    return;
+  }
   request_serve_static(fd, filename, sbuf.st_size);
-  // }
-  // else
-  // {
-  //   if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode))
-  //   {
-  //     request_error(fd, filename, "403", "Forbidden", "server could not run this CGI program");
-  //     return;
-  //   }
-  //   request_serve_dynamic(fd, filename, cgiargs);
-  // }
 }
