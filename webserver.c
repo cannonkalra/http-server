@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "request.h"
+#include <stdbool.h>
 
 int webserver(int port, int buffer_size)
 {
@@ -24,7 +25,7 @@ int webserver(int port, int buffer_size)
     perror("webserver (socket)");
     return EXIT_FAILURE;
   }
-  printf("socket created successfully\n");
+  printf("socket created successfully socket_fd: %d \n", sockfd);
 
   // Create the address to bind the socket to
   struct sockaddr_in host_addr;
@@ -54,7 +55,7 @@ int webserver(int port, int buffer_size)
   }
   printf("server listening for connections\n");
 
-  for (;;)
+  while (true)
   {
     // Accept incoming connections
     int newsockfd = accept(sockfd, (struct sockaddr *)&host_addr,
@@ -77,30 +78,28 @@ int webserver(int port, int buffer_size)
 
     request_handle(newsockfd);
 
-    // Read from the socket
-    int valread = read(newsockfd, buffer, buffer_size);
-    if (valread < 0)
-    {
-      perror("webserver (read)");
-      continue;
-    }
+    // // Read from the socket
+    // int valread = read(newsockfd, buffer, buffer_size);
+    // if (valread < 0)
+    // {
+    //   perror("webserver (read)");
+    //   continue;
+    // }
 
-    // Read the request
-    char method[buffer_size], uri[buffer_size], version[buffer_size];
-    sscanf(buffer, "%s %s %s", method, uri, version);
-    printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
-           ntohs(client_addr.sin_port), method, version, uri);
+    // // Read the request
+    // char method[buffer_size], uri[buffer_size], version[buffer_size];
+    // sscanf(buffer, "%s %s %s", method, uri, version);
+    // printf("[%s:%u] %s %s %s\n", inet_ntoa(client_addr.sin_addr),
+    //        ntohs(client_addr.sin_port), method, version, uri);
 
-    // Write to the socket
-    int valwrite = write(newsockfd, resp, strlen(resp));
-    if (valwrite < 0)
-    {
-      perror("webserver (write)");
-      continue;
-    }
-
-    close(newsockfd);
+    // // Write to the socket
+    // int valwrite = write(newsockfd, resp, strlen(resp));
+    // if (valwrite < 0)
+    // {
+    //   perror("webserver (write)");
+    //   continue;
+    // }
+    // close(newsockfd);
   }
-
   return EXIT_SUCCESS;
 }

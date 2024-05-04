@@ -6,10 +6,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include "request.h"
 #include "io_helper.h"
 
 #define MAXBUF (8192)
+
+#define SLEEP_MS 2200
 
 int request_parse_uri(char *uri, char *filename, char *cgiargs)
 {
@@ -47,6 +50,9 @@ void request_serve_static(int fd, char *filename, int filesize)
   char *srcp, filetype[MAXBUF], buf[MAXBUF];
 
   request_get_filetype(filename, filetype);
+  // simulate a i/o wait
+  usleep(SLEEP_MS * 1000);
+
   srcfd = open(filename, O_RDONLY, 0);
 
   // rather than call read() to read the file into memory,
@@ -102,7 +108,6 @@ void request_error(int fd, char *cause, char *errnum, char *shortmsg, char *long
 
 void request_handle(int fd)
 {
-  int is_static;
   struct stat sbuf;
   char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF];
   char filename[MAXBUF], cgiargs[MAXBUF];
@@ -117,11 +122,12 @@ void request_handle(int fd)
     return;
   }
 
+  printf("main thread id: %d\n", pthread_self());
   // request_read_headers(fd);
-  // sprintf(filename, ".%s", uri);
-  if (strcmp(filename, "/") == 0 || strlen(filename) == 0)
+  if (
+      strcmp(filename, "./") == 0 || strlen(filename) == 0)
   {
-    strcat(filename, "index.html");
+    strcpy(filename, "index.html");
   }
 
   if (stat(filename, &sbuf) < 0)
