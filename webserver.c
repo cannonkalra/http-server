@@ -11,13 +11,17 @@
 #include "request.h"
 #include <stdbool.h>
 
-int webserver(int port, int buffer_size)
+#define MULTI_THREADING 1
+#define BUFFER_SIZE 1024
+#define PORT 8080
+
+int webserver()
 {
-  char buffer[buffer_size];
-  char resp[] = "HTTP/1.0 200 OK\r\n"
-                "Server: webserver-c\r\n"
-                "Content-type: text/html\r\n\r\n"
-                "<html>hello, world</html>\r\n";
+  // char buffer[buffer_size];
+  // char resp[] = "HTTP/1.0 200 OK\r\n"
+  //               "Server: webserver-c\r\n"
+  //               "Content-type: text/html\r\n\r\n"
+  //               "<html>hello, world</html>\r\n";
 
   // Create a socket
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -33,7 +37,7 @@ int webserver(int port, int buffer_size)
   int host_addrlen = sizeof(host_addr);
 
   host_addr.sin_family = AF_INET;
-  host_addr.sin_port = htons(port);
+  host_addr.sin_port = htons(PORT);
   host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
   // Create client address
@@ -79,15 +83,21 @@ int webserver(int port, int buffer_size)
 
     printf("handling request with sockfd: %d \n", newsockfd);
 
-    pthread_t thread;
-    // pthread_create(thread, NULL, request_handle, (void *)newsockfd);
-    // request_handle(newsockfd);
-
-    if (pthread_create(&thread, NULL, request_handle, (void *)newsockfd) != 0)
+    if (MULTI_THREADING)
     {
-      perror("pthread_create");
-      return EXIT_FAILURE;
+      pthread_t thread;
+      // int fd = newsockfd;
+      if (pthread_create(&thread, NULL, request_handle, (void *)newsockfd) != 0)
+      {
+        perror("pthread_create");
+        return EXIT_FAILURE;
+      }
     }
+    // else
+    // {
+    //   request_handle(&newsockfd);
+    // }
+
     // // Read from the socket
     // int valread = read(newsockfd, buffer, buffer_size);
     // if (valread < 0)

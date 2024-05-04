@@ -7,29 +7,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdint.h>
 #include "request.h"
 #include "io_helper.h"
 
 #define MAXBUF (8192)
-
 #define SLEEP_MS 1250
-
-int request_parse_uri(char *uri, char *filename, char *cgiargs)
-{
-  char *ptr;
-
-  if (!strstr(uri, "cgi"))
-  {
-    // static
-    strcpy(cgiargs, "");
-    sprintf(filename, ".%s", uri);
-    if (uri[strlen(uri) - 1] == '/')
-    {
-      strcat(filename, "index.html");
-    }
-    return 1;
-  }
-}
 
 // fills in the filetype given the filename
 void request_get_filetype(char *filename, char *filetype)
@@ -111,7 +94,7 @@ void *request_handle(void *newsockfd)
   int fd = (int)newsockfd;
   struct stat sbuf;
   char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF];
-  char filename[MAXBUF], cgiargs[MAXBUF];
+  char filename[MAXBUF]; //, cgiargs[MAXBUF];
 
   readline(fd, buf, MAXBUF);
   sscanf(buf, "%s %s %s", method, uri, version);
@@ -123,7 +106,7 @@ void *request_handle(void *newsockfd)
     return NULL;
   }
 
-  printf("main thread id: %d\n", pthread_self());
+  printf("main thread id: %d\n", (int)(intptr_t)pthread_self());
   // request_read_headers(fd);
   if (
       strcmp(filename, "./") == 0 || strlen(filename) == 0)
@@ -154,6 +137,8 @@ void *request_handle(void *newsockfd)
   // Now we can safely close the socket
   if (close(fd) < 0)
   {
-    perror("Error closing socket");
+    perror("Error closing socket\n");
   }
+
+  return NULL;
 }
