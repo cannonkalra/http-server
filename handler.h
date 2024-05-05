@@ -10,6 +10,6 @@
 #include <stdbool.h>
 
 void handle_client(int);
-void *multi_thread_handler(void *);
+void multi_thread_handler(void *);
 
 #endif // __HANDLER__

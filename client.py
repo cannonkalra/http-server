@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
-concurrent_tasks = 2
+concurrent_tasks = 14
 
 url = "http://localhost:8080"
 

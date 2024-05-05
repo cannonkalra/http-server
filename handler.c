@@ -7,11 +7,10 @@
 
 #define SLEEP_MS 1200
 
-void *multi_thread_handler(void *arg)
+void multi_thread_handler(void *arg)
 {
   int client_fd = *((int *)arg);
   handle_client(client_fd);
-  return NULL;
 }
 
 void handle_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)

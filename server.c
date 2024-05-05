@@ -1,7 +1,11 @@
 #include "handler.h"
+#include "pool.h"
 
 #define PORT 8080
 #define MULTI_THREAD 1
+
+#define THREADS 2
+#define ITEMS 100
 
 // Function to handle communication with the client
 
@@ -46,6 +50,10 @@ int main()
   printf("server listening for connections\n");
   printf("main thread id: %d\n\n", (int)(intptr_t)pthread_self());
 
+  tpool_t *tm;
+
+  tm = tpool_create(THREADS);
+
   // Loop to accept and handle incoming connections sequentially
   while (true)
   {
@@ -70,8 +78,7 @@ int main()
     }
     else
     {
-      pthread_t client_thread;
-      pthread_create(&client_thread, NULL, multi_thread_handler, client_fd);
+      tpool_add_work(tm, multi_thread_handler, client_fd);
     }
     // Handle the client in the same thread (sequentially)
   }
