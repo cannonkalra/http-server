@@ -4,7 +4,7 @@
 #define PORT 8080
 #define MULTI_THREAD 1
 
-#define THREADS 2
+#define THREADS 8
 #define ITEMS 100
 
 // Function to handle communication with the client
@@ -23,7 +23,7 @@ int main()
     perror("socket failed");
     exit(EXIT_FAILURE);
   }
-  printf("socket created successfully\n");
+  printf("socket created successfully serverfd: %d\n", server_fd);
 
   // Create the address to bind the socket to
   struct sockaddr_in server_addr;
@@ -57,7 +57,7 @@ int main()
   // Loop to accept and handle incoming connections sequentially
   while (true)
   {
-
+    printf("threadpool working threads count:%lu \n", tm->working_cnt);
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
 
