@@ -5,7 +5,7 @@
 #define BUFFER_SIZE 1024
 #define MAX_BUFFER 8192
 
-#define SLEEP_MS 1200
+#define SLEEP_MS 8
 
 void multi_thread_handler(void *arg)
 {

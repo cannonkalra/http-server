@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-
+import statistics
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
-concurrent_tasks = 8
+concurrent_tasks = 6000
 
 url = "http://localhost:8080"
 
@@ -20,8 +20,11 @@ def fetch_url(url):
     return response.status_code, elapsed_time
 
 
+elapsed_times = []
+
 # Use a ThreadPoolExecutor to make requests concurrently
 with ThreadPoolExecutor(max_workers=concurrent_tasks) as executor:
+    print(f"concurrent requests: {concurrent_tasks}")
     # Submit the requests to the executor
     future_to_url = {
         executor.submit(fetch_url, url): id for id in range(concurrent_tasks)
@@ -36,12 +39,19 @@ with ThreadPoolExecutor(max_workers=concurrent_tasks) as executor:
         try:
             # Get the result and the time taken from the future
             result, elapsed_time = future.result()
-            print(
-                f"fetched data from {id}: {result}, time taken: {elapsed_time:.2f} seconds"
-            )
+            elapsed_times.append(elapsed_time)  # Collect the time for this worker
+
+            # print(
+            #     f"fetched data from {id}: {result}, time taken: {elapsed_time:.2f} seconds"
+            # )
         except Exception as e:
             print(f"error fetching data from {id}: {e}")
 
     total_end_time = time.time()  # End time after all requests are processed
     total_elapsed_time = total_end_time - total_start_time  # Total time taken
-    print(f"\ntotal time for all requests: {total_elapsed_time:.2f} seconds")
+    print(f"total time for all requests: {total_elapsed_time:.2f} seconds")
+
+    # Calculate the average time for all workers
+    print(
+        f"resposne mean: {statistics.mean(elapsed_times):.2f} seconds \nresponse median: {statistics.median(elapsed_times):.2f} seconds"
+    )
