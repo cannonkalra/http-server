@@ -14,6 +14,37 @@ void *multi_thread_handler(void *arg)
   return NULL;
 }
 
+void handle_error(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
+{
+  char buf[BUFFER_SIZE], body[BUFFER_SIZE];
+
+  // Create the body of error message first (have to know its length for header)
+  sprintf(body, ""
+                "<!doctype html>\r\n"
+                "<head>\r\n"
+                "  <title>OSTEP WebServer Error</title>\r\n"
+                "</head>\r\n"
+                "<body>\r\n"
+                "  <h2>%s: %s</h2>\r\n"
+                "  <p>%s: %s</p>\r\n"
+                "</body>\r\n"
+                "</html>\r\n",
+          errnum, shortmsg, longmsg, cause);
+
+  // Write out the header information for this response
+  sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
+  write(fd, buf, strlen(buf));
+
+  sprintf(buf, "Content-Type: text/html\r\n");
+  write(fd, buf, strlen(buf));
+
+  sprintf(buf, "Content-Length: %lu\r\n\r\n", strlen(body));
+  write(fd, buf, strlen(buf));
+
+  // Write out the body last
+  write(fd, body, strlen(body));
+}
+
 void handle_client(int client_fd)
 {
   printf("handling connection client_fd: %d, client thread id: %d \n", client_fd, (int)(intptr_t)pthread_self());
@@ -33,21 +64,21 @@ void handle_client(int client_fd)
 
   if (strcasecmp(method, "GET"))
   {
-    // request_error(client_fd, method, "501", "Not Implemented", "server does not implement this method");
+    handle_error(client_fd, method, "501", "Not Implemented", "server does not implement this method");
     perror("method not implemented \n");
-    exit(EXIT_FAILURE);
+    close(client_fd);
+    return;
   }
 
-  if (strcmp(uri, "/") == 0)
-  {
-    strcpy(filename, "index.html");
-  }
+  // make filename to index.html if '/' else filename
+  strcpy(filename, strcmp(uri, "/") == 0 ? "index.html" : uri);
 
-  // TODO: handle error as 403, 404
-  if (strcmp(filename, "") == 0)
+  if (strcmp(filename, "index.html") != 0)
   {
+    handle_error(client_fd, filename, "404", "Not found", "server could not find this file");
     perror("index.html");
-    exit(EXIT_FAILURE);
+    close(client_fd);
+    return;
   }
 
   usleep(SLEEP_MS * 1000);
@@ -89,4 +120,5 @@ void handle_client(int client_fd)
   printf("closing_ connection client_fd: %d, client thread id: %d \n", client_fd, (int)(intptr_t)pthread_self());
   // Close the client socket when done
   close(client_fd);
+  return;
 }
