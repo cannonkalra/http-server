@@ -1,6 +1,6 @@
 #include "handler.h"
 #include "pool.h"
-
+#include <fcntl.h>
 #define PORT 8080
 #define MULTI_THREAD 1
 
@@ -11,9 +11,15 @@
 
 int main()
 {
-  printf("pid: %d, ppid: %d \n", getpid(), getppid());
+  pid_t pid = getpid();
+  pid_t ppid = getppid();
+
+  printf("pid: %d, ppid: %d \n", pid, ppid);
+  printf("pagesize: %dkB \n", getpagesize() / 1024);
   // Create a socket
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+  struct rlimit rlim;
+  printf("max heap size: %llu bytes\n", rlim.rlim_cur);
 
   int option = 1;
   setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
@@ -54,13 +60,14 @@ int main()
 
   tm = tpool_create(THREADS);
 
+  struct rusage usage;
+
   // Loop to accept and handle incoming connections sequentially
   while (true)
   {
     printf("threadpool working threads count:%lu \n", tm->working_cnt);
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
-
     int *client_fd = (int *)malloc(sizeof(int));
     *client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
@@ -70,7 +77,7 @@ int main()
       // Continue to the next loop iteration if accept fails
       continue;
     }
-    printf("connection accepted\n");
+    printf("connection (accepted)\n");
 
     if (!MULTI_THREAD)
     {
@@ -81,6 +88,8 @@ int main()
       tpool_add_work(tm, multi_thread_handler, client_fd);
     }
     // Handle the client in the same thread (sequentially)
+    getrusage(RUSAGE_SELF, &usage);
+    printf("memusage: %ld kB \n", usage.ru_maxrss / 1024);
   }
 
   // Close the server socket before exiting

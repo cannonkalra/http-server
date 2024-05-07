@@ -1,11 +1,10 @@
 #include <sys/mman.h>
 #include "handler.h"
-#include <fcntl.h>
 
 #define BUFFER_SIZE 1024
 #define MAX_BUFFER 8192
 
-#define SLEEP_MS 8
+#define SLEEP_MS 60
 
 void multi_thread_handler(void *arg)
 {
@@ -84,6 +83,15 @@ void handle_client(int client_fd)
 
   file_fd = open(filename, O_RDONLY, 0);
 
+  struct stat sb; // filesize
+
+  if (fstat(file_fd, &sb) == -1)
+  {
+    perror("couldn't get file size");
+  }
+
+  printf("file size is %lld\n", sb.st_size);
+
   if (file_fd < 0)
   {
     perror("file open error");
@@ -116,8 +124,9 @@ void handle_client(int client_fd)
 
   munmap(file_buffer, strlen(file_buffer));
 
-  printf("closing_ connection client_fd: %d, client thread id: %d \n", client_fd, (int)(intptr_t)pthread_self());
+  printf("closing connection client_fd: %d, client thread id: %d \n", client_fd, (int)(intptr_t)pthread_self());
   // Close the client socket when done
   close(client_fd);
+  // Get memory usage
   return;
 }

@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 void handle_client(int);
 void multi_thread_handler(void *);
